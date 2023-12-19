@@ -10,9 +10,10 @@ public:
     float radius;
     float flapTimer;
     bool isFlapping;
+    bool isCarryingSnake;
     glm::quat birdRotation;
 
     Bird(glm::vec3 startPos, float startAngle, float startRadius);
 
-    void Update(float deltaTime, glm::vec3 centerPoint, float arrivalThreshold);
+    void Update(float deltaTime, glm::vec3 centerPoint, float arrivalThreshold, glm::vec3 snakePosition, float distanceThreshold);
 };

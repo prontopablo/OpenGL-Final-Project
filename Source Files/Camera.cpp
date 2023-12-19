@@ -11,16 +11,16 @@ Camera::Camera(int width, int height, glm::vec3 position)
 
 void Camera::updateMatrix(float FOVdeg, float nearPlane, float farPlane)
 {
-	// Initializes matrices since otherwise they will be the null matrix
+	// Initialize matrices
 	glm::mat4 view = glm::mat4(1.0f);
 	glm::mat4 projection = glm::mat4(1.0f);
 
-	// Makes camera look in the right direction from the right position
+	// Set camera view
 	view = glm::lookAt(Position, Position + Orientation, Up);
-	// Adds perspective to the scene
+	// Add perspective
 	projection = glm::perspective(glm::radians(FOVdeg), (float)width / height, nearPlane, farPlane);
 
-	// Sets new camera matrix
+	// Set new camera matrix
 	cameraMatrix = projection * view;
 }
 

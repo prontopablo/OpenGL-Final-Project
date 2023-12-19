@@ -24,12 +24,12 @@ unsigned int samples = 8;
 float skyboxVertices[] =
 {
 	-1.0f, -1.0f,  1.0f,
-	 1.0f, -1.0f,  1.0f,     
-	 1.0f, -1.0f, -1.0f,    
-	-1.0f, -1.0f, -1.0f,      
-	-1.0f,  1.0f,  1.0f,     
-	 1.0f,  1.0f,  1.0f,     
-	 1.0f,  1.0f, -1.0f,     
+	 1.0f, -1.0f,  1.0f,
+	 1.0f, -1.0f, -1.0f,
+	-1.0f, -1.0f, -1.0f,
+	-1.0f,  1.0f,  1.0f,
+	 1.0f,  1.0f,  1.0f,
+	 1.0f,  1.0f, -1.0f,
 	-1.0f,  1.0f, -1.0f
 };
 
@@ -70,7 +70,7 @@ int main()
 	glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
 	glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
 	glfwWindowHint(GLFW_SAMPLES, samples);
-	
+
 	// CORE profile
 	glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
 
@@ -88,7 +88,7 @@ int main()
 
 	//Load GLAD so it configures OpenGL
 	gladLoadGL();
-	
+
 	// Viewport goes from x = 0, y = 0, to x = width, y = height
 	glViewport(0, 0, screenWidth, screenHeight);
 
@@ -165,7 +165,7 @@ int main()
 	Model riverWall("models/riverWall/scene.gltf");
 	Model riverWall2("models/riverWall2/scene.gltf");
 	Model riverbed("models/riverbed/scene.gltf");
-	
+
 	// Bridge
 	Model bridge("models/bridge/scene.gltf");
 	Model harpBase("models/harpBase/scene.gltf");
@@ -187,6 +187,10 @@ int main()
 	// Dunes
 	Model cityBase1("models/cityBase1/scene.gltf");
 	Model cityBase2("models/cityBase2/scene.gltf");
+	Model cityBase3("models/cityBase3/scene.gltf");
+	Model cityBase4("models/cityBase4/scene.gltf");
+	Model cityBase5("models/cityBase5/scene.gltf");
+	Model cityBase6("models/cityBase6/scene.gltf");
 
 	// Convention Centre
 	Model conventionCentreBase("models/conventionCentreBase/scene.gltf");
@@ -250,12 +254,17 @@ int main()
 	Model mcCannBase("models/building2Base/scene.gltf");
 	Model building3("models/building3/scene.gltf");
 
+	Model skyCube("models/skyCube/scene.gltf");
+	Model skyCubeCube("models/skyCubeCube/scene.gltf");
+
 	// Model Positions
 	glm::vec3 origin = glm::vec3(0.0, 0.0, 0.0);
 	glm::vec3 sunPosition = glm::vec3(40.0, 50.0, 0.0);
 	glm::vec3 snakeHeadPosition = glm::vec3(0.0, 0.0, 0.0);
 	glm::vec3 snakeBodyPosition = glm::vec3(0.0, 0.0, 0.0);
 	glm::vec3 snakeTailPosition = glm::vec3(0.0, 0.0, 0.0);
+
+	glm::vec3 birdSnakeTarget = glm::vec3(-94.0f, 11.25f, 12.5f);
 
 	// Model Rotations
 	glm::quat birdRotation = glm::quat(0.0f, 1.0f, 0.0f, 0.0f);
@@ -273,6 +282,9 @@ int main()
 	glm::vec3 target(snakeTargetX, 0.0f, snakeTargetZ);
 	float numSnakeParts = 5.0f;
 	float snakeOffset = 2.05f;
+	bool isBeingCarried = false;
+	bool isFalling = false;
+	bool isDead =  false;
 
 	// Variables to create periodic event for FPS displaying
 	double prevTime = 0.0;
@@ -318,12 +330,12 @@ int main()
 	glBindTexture(GL_TEXTURE_CUBE_MAP, cubemapTexture);
 	glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 	glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-	
+
 	// Prevent seams
 	glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
 	glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
 	glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_R, GL_CLAMP_TO_EDGE);
-	
+
 	// This might help with seams on some systems
 	// glEnable(GL_TEXTURE_CUBE_MAP_SEAMLESS);
 
@@ -421,9 +433,9 @@ int main()
 	std::vector<Cactus> cacti;
 	glm::vec3 cactusPosition;
 	const int numCactiPerRow = 10;
-	const int numCactiPerColumn = 12;
-	const float spacingX = 100.0f;
-	const float spacingZ = 100.0f;
+	const int numCactiPerColumn = 20;
+	const float spacingX = 300.0f;
+	const float spacingZ = 400.0f;
 
 	for (int row = 0; row < numCactiPerRow; ++row) {
 		for (int col = 0; col < numCactiPerColumn; ++col) {
@@ -451,8 +463,8 @@ int main()
 	music.openFromFile("C:/Users/darra/Desktop/Music/sandTunes.ogg");
 	music.setVolume(15.0f);
 	music.setPitch(1.0f);
-	music.play();
-	
+	music.play(); // re-enable for transition from cube
+
 
 	// Main while loop
 	while (!glfwWindowShouldClose(window))
@@ -573,6 +585,10 @@ int main()
 
 		cityBase1.Draw(shaderProgram, camera, origin);
 		cityBase2.Draw(shaderProgram, camera, origin);
+		cityBase3.Draw(shaderProgram, camera, origin);
+		cityBase4.Draw(shaderProgram, camera, origin);
+		cityBase5.Draw(shaderProgram, camera, origin);
+		cityBase6.Draw(shaderProgram, camera, origin);
 
 		conventionCentreBase.Draw(shaderProgram, camera, origin);
 		// canOfBeans.Draw(shaderProgram, camera, origin);
@@ -604,7 +620,7 @@ int main()
 		wire8.Draw(shaderProgram, camera, origin);
 		wire9.Draw(shaderProgram, camera, origin);
 		wire10.Draw(shaderProgram, camera, origin);
-		
+
 
 		// sun.Draw(shaderProgram, camera, sunObject.position, sunDirection);
 		// moon.Draw(shaderProgram, camera, moonObject.position, moonDirection);
@@ -616,7 +632,11 @@ int main()
 
 		// Update bird positions
 		for (int i = 0; i < birds.size(); ++i) {
-			birds[i].Update(1.0f / 60.0f, birdsCenterPoint, 0.5f);
+			birds[i].Update(1.0f / 60.0f, birdsCenterPoint, 0.5f, birdSnakeTarget, 22.0f);
+			if (birds[i].isCarryingSnake) {
+				birdSnakeTarget = glm::vec3(1000, 1000, 1000);
+				isBeingCarried = true;
+			}
 		}
 
 		// Draw birds
@@ -635,11 +655,11 @@ int main()
 		spPanel2.Draw(shaderProgram, camera, origin, spPanelRotation);
 		spStand2.Draw(shaderProgram, camera, origin);
 		spJoint2.Draw(shaderProgram, camera, origin);
-		
+
 		spPanel3.Draw(shaderProgram, camera, origin, spPanelRotation);
 		spStand3.Draw(shaderProgram, camera, origin);
 		spJoint3.Draw(shaderProgram, camera, origin);
-		
+
 		spPanel4.Draw(shaderProgram, camera, origin, spPanelRotation);
 		spStand4.Draw(shaderProgram, camera, origin);
 		spJoint4.Draw(shaderProgram, camera, origin);
@@ -652,7 +672,6 @@ int main()
 
 		// Buildings
 		mcCannBase.Draw(shaderProgram, camera, origin);
-
 		building3.Draw(shaderProgram, camera, origin);
 
 		// Snake
@@ -667,59 +686,106 @@ int main()
 		glm::quat bodyRotationQuaternion = glm::quatLookAt(bodyToHeadDirection, glm::vec3(0.0f, 1.0f, 0.0f));
 		snakeBodyRotation = bodyRotationQuaternion;
 
-		// Update head position and rotation
-		target = glm::vec3(snakeTargetX, 0.0f, snakeTargetZ);
-		float distanceToTarget = glm::length(snakeHeadPosition - target);
+		if (isDead) {
+			snake.Draw(shaderProgram, camera, snakeHeadPosition, snakeHeadRotation);
 
-		if (distanceToTarget < 0.5f) {
-			snakeTargetX = glm::clamp(randf() * 90, -10.0f, 90.0f);
-			snakeTargetZ = glm::clamp(randf() * 90, -10.0f, 90.0f);
-		}
-
-		float oscillationAmplitude = 0.01f;
-		float oscillationFrequency = 1.5f;
-		float phaseShift = 5.0f;
-
-		// Head
-		glm::vec3 directionToTarget = glm::normalize(target - snakeHeadPosition);
-
-		// Add oscillation
-		snakeHeadPosition.x += oscillationAmplitude * sin(glfwGetTime() * oscillationFrequency + phaseShift);
-		snakeHeadRotation.z = glm::radians(oscillationAmplitude * sin(glfwGetTime() * oscillationFrequency * 2.0f + phaseShift));
-
-		snakeHeadPosition += directionToTarget * 1.0f / 60.0f; // Move snake towards target
-		
-		glm::quat targetRotation = glm::quatLookAt(directionToTarget, glm::vec3(0.0f, 1.0f, 0.0f)); // Look towards target
-		snakeHeadRotation = glm::slerp(snakeHeadRotation, targetRotation, 1.0f / 60.0f * 0.75f);
-		snake.Draw(shaderProgram, camera, snakeHeadPosition, snakeHeadRotation, snakeHeadScale);
-
-		// Body
-		snakeBodyPosition = snakeHeadPosition - (directionToTarget * snakeOffset);
-		bodyRotationQuaternion.x += 2.0f;
-		snake.Draw(shaderProgram, camera, snakeBodyPosition, snakeBodyRotation); // Draw first body
-		
-		float currentPhaseShift = phaseShift;
-		// Draw other body parts + update their positions
-		for (int i = 0; i < numSnakeParts; i++) {
-			bodyToHeadDirection = glm::normalize(snakeBodyPosition - (snakeBodyPosition - (directionToTarget * snakeOffset)));
-			bodyRotationQuaternion = glm::quatLookAt(bodyToHeadDirection, glm::vec3(0.0f, 1.0f, 0.0f));
-			snakeBodyRotation = glm::slerp(snakeBodyRotation, bodyRotationQuaternion, 1.0f / 60.0f * 0.50f);
-			
-			// Add oscillation to snakeBodyPosition.y and snakeBodyRotation.z
-			snakeBodyPosition.x += oscillationAmplitude * sin(glfwGetTime() * oscillationFrequency + currentPhaseShift);
-			snakeBodyRotation.z = glm::radians(oscillationAmplitude * sin(glfwGetTime() * oscillationFrequency * 2.0f + currentPhaseShift));
-
-			snakeBodyPosition -= directionToTarget * snakeOffset;
+			snakeBodyPosition = snakeHeadPosition - snakeOffset * 0.5f;
 			snake.Draw(shaderProgram, camera, snakeBodyPosition, snakeBodyRotation);
-			currentPhaseShift += 5.0f;
+
+			for (int i = 0; i < numSnakeParts + 1; i++) {
+				snakeBodyPosition -= snakeOffset * 0.5f;
+				snake.Draw(shaderProgram, camera, snakeBodyPosition, snakeBodyRotation);
+			}
+		}
+		else {
+			if (!isBeingCarried) {
+				// Update head position and rotation
+				target = glm::vec3(snakeTargetX, 0.0f, snakeTargetZ);
+				float distanceToTarget = glm::length(snakeHeadPosition - target);
+
+				if (distanceToTarget < 0.5f) {
+					snakeTargetX = glm::clamp(randf() * 90, -10.0f, 90.0f);
+					snakeTargetZ = glm::clamp(randf() * 90, -10.0f, 90.0f);
+				}
+
+				float oscillationAmplitude = 0.01f;
+				float oscillationFrequency = 1.5f;
+				float phaseShift = 5.0f;
+
+				// Head
+				glm::vec3 directionToTarget = glm::normalize(target - snakeHeadPosition); // Find the direction to the target
+
+				// Add oscillation
+				snakeHeadPosition.x += oscillationAmplitude * sin(glfwGetTime() * oscillationFrequency + phaseShift);
+				snakeHeadRotation.z = glm::radians(oscillationAmplitude * sin(glfwGetTime() * oscillationFrequency * 2.0f + phaseShift));
+
+				snakeHeadPosition += directionToTarget * 1.0f / 60.0f; // Move snake towards target
+
+				glm::quat targetRotation = glm::quatLookAt(directionToTarget, glm::vec3(0.0f, 1.0f, 0.0f)); // Look towards target
+				snakeHeadRotation = glm::slerp(snakeHeadRotation, targetRotation, 1.0f / 60.0f * 0.75f); // Slerp rotation
+				snake.Draw(shaderProgram, camera, snakeHeadPosition, snakeHeadRotation, snakeHeadScale); // Draw head
+
+				// Body
+				// Add an offset to head position to get body position
+				snakeBodyPosition = snakeHeadPosition - (directionToTarget * snakeOffset);
+				bodyRotationQuaternion.x += 2.0f; // Add rotation offset
+				snake.Draw(shaderProgram, camera, snakeBodyPosition, snakeBodyRotation); // Draw first body part
+
+				float currentPhaseShift = phaseShift; // Used to offset each part to a different section of sine wave
+
+				/* Loop through body parts and set their position, point them towards the body part in front of them
+				   Update x and z using sine waves to make the movement more snake-like
+				*/ 
+				for (int i = 0; i < numSnakeParts; i++) {
+					bodyToHeadDirection = glm::normalize(snakeBodyPosition - (snakeBodyPosition - (directionToTarget * snakeOffset)));
+					bodyRotationQuaternion = glm::quatLookAt(bodyToHeadDirection, glm::vec3(0.0f, 1.0f, 0.0f));
+					snakeBodyRotation = glm::slerp(snakeBodyRotation, bodyRotationQuaternion, 1.0f / 60.0f * 0.50f);
+
+					// Add oscillation to snakeBodyPosition.y and snakeBodyRotation.z
+					snakeBodyPosition.x += oscillationAmplitude * sin(glfwGetTime() * oscillationFrequency + currentPhaseShift);
+					snakeBodyRotation.z = glm::radians(oscillationAmplitude * sin(glfwGetTime() * oscillationFrequency * 2.0f + currentPhaseShift));
+
+					snakeBodyPosition -= directionToTarget * snakeOffset; // move towards target * offset
+					snake.Draw(shaderProgram, camera, snakeBodyPosition, snakeBodyRotation); // Draw current part
+					currentPhaseShift += 5.0f; // Increment phase shift for next part
+				}
+
+				// Tail
+				snakeTailPosition = snakeBodyPosition - (directionToTarget * snakeOffset);
+				snakeTailPosition.x += oscillationAmplitude * sin(glfwGetTime() * oscillationFrequency + currentPhaseShift);
+				snakeTailRotation.z = glm::radians(oscillationAmplitude * sin(glfwGetTime() * oscillationFrequency * 2.0f + currentPhaseShift));
+
+				snake.Draw(shaderProgram, camera, snakeTailPosition, snakeTailRotation);
+			}
+			else {
+
+				if (snakeHeadPosition.y > birdsCenterPoint.y * 6.6f) {
+					isFalling = true;
+				}
+				if (isFalling) {
+					snakeHeadPosition.y -= (1.0f / 60.0f) * 40.0f;
+				}
+				if (isFalling && snakeHeadPosition.y < 5.0f) {
+					isDead = true;
+					std::cout << "snake dead";
+				}
+				if (!isFalling) {
+					snakeHeadPosition.y += (1.0f / 60.0f) * 11.0f;
+				}
+				snake.Draw(shaderProgram, camera, snakeHeadPosition, snakeHeadRotation);
+
+				snakeBodyPosition = snakeHeadPosition - snakeOffset * 0.5f;
+				snake.Draw(shaderProgram, camera, snakeBodyPosition, snakeBodyRotation);
+
+				for (int i = 0; i < numSnakeParts + 1; i++) {
+					snakeBodyPosition -= snakeOffset * 0.5f;
+					snake.Draw(shaderProgram, camera, snakeBodyPosition, snakeBodyRotation);
+				}
+			}
 		}
 
-		// Tail
-		snakeTailPosition = snakeBodyPosition - (directionToTarget * snakeOffset);
-		snakeTailPosition.x += oscillationAmplitude * sin(glfwGetTime() * oscillationFrequency + currentPhaseShift);
-		snakeTailRotation.z = glm::radians(oscillationAmplitude * sin(glfwGetTime() * oscillationFrequency * 2.0f + currentPhaseShift));
-
-		snake.Draw(shaderProgram, camera, snakeTailPosition, snakeTailRotation);
+		// skyCube.Draw(shaderProgram, camera, origin);
+		// skyCubeCube.Draw(shaderProgram, camera, origin);
 
 		// Cubemap will always have a depth of 1.0
 		glDepthFunc(GL_LEQUAL);
@@ -748,40 +814,42 @@ int main()
 		// Switch back to the normal depth function
 		glDepthFunc(GL_LESS);
 
-		// Add ImGui window
-		ImGui::Begin("Light");
-		//ImGui::Text("light3pos");
+		//// Add ImGui window
+		//ImGui::Begin("Settings"); // Title
+		//ImGui::Text("Bird Target Point"); // Text
 		//
-		//ImGui::SliderFloat("X", &birdsCenterPoint.x, -100.0f, 100.0f);
+		//ImGui::SliderFloat("X", &birdsCenterPoint.x, -100.0f, 100.0f); // Slider with values from -100 to 100
 		//ImGui::SliderFloat("Y", &birdsCenterPoint.y, -100.0f, 100.0f);
 		//ImGui::SliderFloat("Z", &birdsCenterPoint.z, -100.0f, 100.0f);
 
-		////ImGui::SliderFloat("X", &sunObject.position.x, -1000.0f, 1000.0f);
-		////ImGui::SliderFloat("Y", &sunObject.position.y, -1000.0f, 1000.0f);
-		////ImGui::SliderFloat("Z", &sunObject.position.z, -1000.0f, 1000.0f);
+		//ImGui::Text("Sun Position");
+		//ImGui::SliderFloat("X", &sunObject.position.x, -1000.0f, 1000.0f);
+		//ImGui::SliderFloat("Y", &sunObject.position.y, -1000.0f, 1000.0f);
+		//ImGui::SliderFloat("Z", &sunObject.position.z, -1000.0f, 1000.0f);
 
-		//ImGui::Text("Camera");
+		//ImGui::Text("Camera Position");
 		//ImGui::SliderFloat("X", &camera.Position.x, -1000.0f, 1000.0f);
 		//ImGui::SliderFloat("Y", &camera.Position.y, -1000.0f, 1000.0f);
 		//ImGui::SliderFloat("Z", &camera.Position.z, -1000.0f, 1000.0f);
 
-		//ImGui::Text("Pitch");
+		//ImGui::Text("Music Pitch");
 		//ImGui::SliderFloat("Pitch", &currentPitch, 0.0f, 1.0f);
 
-		//ImGui::Text("target position");
+		//ImGui::Text("Snake Target Point");
 		//ImGui::SliderFloat("x", &target.x, -100.0f, 100.0f);
 		//ImGui::SliderFloat("y", &target.y, -100.0f, 100.0f);
-		//ImGui::SliderFloat("z", &target.z, -100.0f, 100.0f)
+		//ImGui::SliderFloat("z", &target.z, -100.0f, 100.0f);
 
-		ImGui::Text("Light3 Position");
-		ImGui::SliderFloat("x", &lightPos3.x, -20.0f, 20.0f);
-		ImGui::SliderFloat("y", &lightPos3.y, -20.0f, 20.0f);
-		ImGui::SliderFloat("z", &lightPos3.z, -20.0f, 20.0f);
+		//ImGui::Text("Point Light Position");
+		//ImGui::SliderFloat("x", &lightPos3.x, -20.0f, 20.0f);
+		//ImGui::SliderFloat("y", &lightPos3.y, -20.0f, 20.0f);
+		//ImGui::SliderFloat("z", &lightPos3.z, -20.0f, 20.0f);
+		//
+		//ImGui::Text("Snake Length");
+		//ImGui::SliderFloat("Body Parts", &numSnakeParts, 0.0, 25.0);
+		//
 
-		ImGui::Text("Body Length");
-		ImGui::SliderFloat("num", &numSnakeParts, 0.0f, 25.0f);
-
-		ImGui::End();
+		//ImGui::End();
 		
 
 		ImGui::Render();

@@ -30,8 +30,11 @@ uniform mat4 scale;
 
 void main()
 {
+	float curvature = 0.001f;
 	// calculates current position
 	crntPos = vec3(model * translation * rotation * scale * vec4(aPos, 1.0f));
+	// Apply world curvature
+    crntPos.y -= curvature * crntPos.x * crntPos.x;
 	// Assigns the normal from the Vertex Data to "Normal"
 	Normal = aNormal;
 	// Assigns the colors from the Vertex Data to "color"
